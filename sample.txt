@@ -1,0 +1,37 @@
+javac remotecalc_server_udp.java
+
+javac remotecalc_udp.java
+
+java remotecalc_server_udp 4333
+	
+java remotecalc_udp 127.0.0.1:4333 add 2 4
+From server: 6
+
+java remotecalc_udp 127.0.0.1:4333 add 2
+ -4
+Invalid Command
+
+java remotecalc_udp 127.0.0.1:4323 add 2
+ 4
+The server has not answered in 2 seconds.
+ Enter 'retry' to resend the message or 'exit' to exit the application:
+
+retry
+The server has not answered in 2 seconds.
+ Enter 'retry' to resend the message or 'exit' to exit the application:
+
+exit
+
+java remotecalc_server_tcp 5544
+
+javac remotecalc_tcp.java
+java remotecalc_tcp 127.0.0.1:5544 add 4 5
+
+From server: 9
+
+java remotecalc_tcp 127.0aaa.0.1:5544 add 4 5
+Invalid Command
+
+java remotecalc_tcp 127.0aaa.0.1:5544 substract 4 5
+Invalid Command
+
