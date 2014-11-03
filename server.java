@@ -2,12 +2,12 @@ import java.io.*;
 import java.net.*;
 
 /**
- * This is the server class for UDP.
+ * This is the server class for the RTP 
  * 
  * @author Hailey Armfield
  *
  */
-public class remotecalc_server_udp
+public class server
 {
 	/**
 	 * The main method takes in the port number provided and creates a socket for listening 
@@ -96,4 +96,15 @@ public class remotecalc_server_udp
 	       }
 	   	return true;
    }
+    
+    public static void connEstablishment(){
+    	//wait for client
+    	
+    	//receive syn 
+    	//send syn+ack
+    	
+    	//wait for ack
+    	
+    	//recieve ack
+    }
 }

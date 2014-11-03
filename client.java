@@ -1,16 +1,16 @@
 import java.io.*;
 import java.net.*;
 /**
- * This class represents the client for UDP.
+ * This class represents the client for RTP
  * 
  * @author Hailey Armfield
  *
  */
-public class remotecalc_udp
+public class client
 {
 /**
  * This class is the client file for udp. It reads in information from the input arguments. 
- * It passes in the host name and port number to communicate with the server. remotecalc_udp
+ * It passes in the host name and port number to communicate with the server. This client 
  * sends the input numbers and string in datagram packets to the server and receives the answer
  * in bytes from the server.
  * @param args
@@ -18,11 +18,17 @@ public class remotecalc_udp
  */
     public static void main(String args[]) throws SocketException
     {
+    	//creates a socket for the connection
     	DatagramSocket socketClient = new DatagramSocket();
+    	
+    	//create new packet header for packet
+    	RTPHeader pktheader = new RTPHeader();
     	
         try
         {
+        	//connEstablishment();
         	
+        	//takes input from user and puts it into a string array
             String []addressArr; 
             addressArr = args[0].split(":", 2);
             if (args.length != 4){
@@ -34,10 +40,10 @@ public class remotecalc_udp
                 		input += args[i];
                 	}
                 	else
-                		input += args[i] + " ";
-                    
+                		input += args[i] + " ";    
                 }
 
+                //takes input and converts in to bytes to prepare for packet transfer
                 byte[] b = input.getBytes();
                 
                 InetAddress host = InetAddress.getByName(addressArr[0]); 
@@ -47,8 +53,6 @@ public class remotecalc_udp
                 //check to see if num1 is 2 bytes
                 int num = Integer.parseInt(args[2]);
                 checkNum(num);
-                
-                //check to see if num2 is 2 bytes
                 num = Integer.parseInt(args[3]);
                 checkNum(num);
                 
@@ -62,8 +66,10 @@ public class remotecalc_udp
                 //buffer to receive reply
                 byte[] buffer = new byte[64];
                 DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
+                
                 //creates time out 
                 socketClient.setSoTimeout(2000);
+                
                 // need to have statement to try again
                 socketClient.receive(reply);
                 byte[] data = reply.getData();
@@ -142,6 +148,31 @@ public class remotecalc_udp
     		//throw new IOException("Incorrect computation string");
     		System.err.println("Invalid Command");
     	}
+    }
+    
+    /**
+     * Creates the connection establishment through the three way handshake
+     */
+    public static void connEstablishment(){
+    	//Create packet
+    	RTPHeader signalHeader = new RTPHeader();
+    	
+    	//Send syn
+    	
+    	//wait for ack+syn
+    	
+    	//send ack
+    	
+    	
+    }
+    
+    /**
+     * Generates the initial sequence number for a packet
+     * 
+     * @return int
+     */
+    public static int isn(){
+    	// randomly generate a 32bit number 
     }
     
 }

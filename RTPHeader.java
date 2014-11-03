@@ -93,9 +93,9 @@ public class RTPHeader
   /**
    * Creates a new RTP header with the provided information.
    *
-   * @param  srcPort       The source port for this RTP header.
-   * @param  dstnPort  The destination port for this RTP header.
-   * @param  seqNum   The sequence number for this RTP header.
+   * @param  srcPort          The source port for this RTP header.
+   * @param  dstnPort         The destination port for this RTP header.
+   * @param  seqNum           The sequence number for this RTP header.
    * @param  ackNumber        The acknowledgement number for this RTP header.
    * @param  dataOffset       The data offset for this RTP header, measured in
    *                          32-bit words.
@@ -103,7 +103,7 @@ public class RTPHeader
    * @param  window           The window for this RTP header.
    * @param  checksum         The checksum for this RTP header.
    * @param  urgentPointer    The urgent pointer for this RTP header.
-   * @param  optBytes      The raw data associated with any options in this
+   * @param  optBytes         The raw data associated with any options in this
    *                          RTP header.
    */
   public RTPHeader(int srcPort, int dstnPort, int seqNum,
@@ -304,7 +304,6 @@ public class RTPHeader
   {
     return checksum;
   }
-
 
 
   /**
