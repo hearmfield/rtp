@@ -41,7 +41,7 @@ public class RTPserver
             String nums[] = str.split(" ",3); 
             
             //do math
-            String answer = "HI";
+            String answer = "HIllo";
             //create datagram packet to send back to the client
             DatagramPacket dp = new DatagramPacket(answer.getBytes() , answer.getBytes().length , packets.getAddress() , packets.getPort());
             serverSocket.send(dp);
