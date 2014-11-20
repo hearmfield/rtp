@@ -1,29 +1,52 @@
 
 public class RTPpacket {
-	final static int HEADER_SIZE = 20;
-	
-	//rtp header info
-	public int version;
-	public int padding;
-	public int extension;
-	public int cc;
-	public int marker;
-	public int payloadType;
-	public int sequenceNumber;
-	public int ssrc;
-	
 	public byte[] header;
-	public int payload_length; 
-	public byte[] payload;
+	//public int payload_length; 
+	//public byte[] payload;
+
 	
-	//details of header
+	//establishes connection and synchronizes sequence numbers
+	public int syn; 
+	// acknowledge field significant
 	public int ackNumber;
-	public int flags;
+	// non-cummulative extended acknowledgement
+	public int eack;
+	//reset the connection
+	public int rst;
+	// zero data length segment
+	public int nul;
+	//contains version number of protocol = 1
+	public int versionNumber;
+	// shows length of header length to help find the start of the data field 
+	// header with no variable header section = 9
+	public int header_length;
+	
+	// allows port numbers between 0 and 255
+	public int sourcePort;
+	// allows port numbers between 0 and 255
+	public int destinationPort;
+	// length of payload
+	public int data_length;
+	// sequence number of this segment
+	public int sequenceNumber;
+	// if the ack bit is set, this is the sequence number of the last segment that the receiver received correctly
+	public int acknowledgementNumber;
+	//32 bit checksum
 	public int checksum;
+	// the maximum number of outstanding segments that will be sent without receiving an acknowledgement first
 	public int rcvWindow;
+	// the maximum size segment that the sender should send
+	public int mss;
+	// option flag field - sequence delivery mode
+	// flag to signal if delivery mode is sequenced (1) or non-sequenced (0)
+	public int sdm;
+	// packet that was received with a correct checksum 
+	
 	public boolean ackReceived;
 	
-	//offsets of header
+	
+	
+	//offsets of header -- dont need
     public static final int SEQ_NUM_OFFSET = 0;
     public static final int ACK_NUM_OFFSET = 4;
     public static final int FLAGS_OFFSET = 8;
@@ -33,23 +56,44 @@ public class RTPpacket {
     public static final int HDR_SIZE = 24; 
     public static final int FLAGS_ACK = 1;
 	
-	public RTPpacket(){
-		version = 2;
-		padding = 0;
-		extension = 0;
-		cc = 0;
-		marker = 0;
-		ssrc = 0;
-		
-		sequenceNumber = 0;
-		checksum = 0;
+	public RTPpacket(int sPort, int dPort){
+
+		syn = 0; 
 		ackNumber = 0;
-		flags = 0;
-		ackReceived = false;
+		eack = 0;
+		rst = 0;
+		nul = 0;
+		versionNumber = 0;
+		header_length = 20;
+		sourcePort = sPort;
+		destinationPort = dPort;
+		data_length = 0;
+		sequenceNumber = 0;
+		acknowledgementNumber = 0;
+		checksum = 0;
+		rcvWindow = 0;
+		mss = 0;
+		sdm = 0;
 		
 		
-		header = new byte[HEADER_SIZE];
+		header = new byte[header_length];
 	}
+	
+	public void setSyn(){
+		//check to see if syn is 0 or 1
+		if (header[0] >> 7 == 0){
+			//change 0 to 1
+			header[0] = (byte) (1 << 7 | header[0]);
+		}
+	}
+	
+	public void setAckBit(){
+		if (header[0] >> 6 == 0){
+			//change 0 to 1
+			header[0] = (byte) (1 << 6 | header[0]);
+		} 
+	}
+	
 	
 	/**
 	 * Comput the checksum from the information given
