@@ -43,6 +43,9 @@ public class RTPpacket {
 	// packet that was received with a correct checksum 
 	
 	public boolean ackReceived;
+
+
+	public int length;
 	
 	
 	
@@ -56,7 +59,7 @@ public class RTPpacket {
     public static final int HDR_SIZE = 24; 
     public static final int FLAGS_ACK = 1;
 	
-	public RTPpacket(int sPort, int dPort){
+	public RTPpacket(int dPort){
 
 		syn = 0; 
 		ackNumber = 0;
@@ -65,7 +68,7 @@ public class RTPpacket {
 		nul = 0;
 		versionNumber = 0;
 		header_length = 20;
-		sourcePort = sPort;
+		//sourcePort = sPort;
 		destinationPort = dPort;
 		data_length = 0;
 		sequenceNumber = 0;
@@ -112,6 +115,12 @@ public class RTPpacket {
 			return true;
 		else
 			return false;
+	}
+
+	//need to convert packet to bytes
+	public byte[] getBytes() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
