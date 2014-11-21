@@ -7,15 +7,24 @@ import java.net.*;
  *
  */
 public class FTAclient {
+	private static String directory = "C:\\Users\\Andrew Ford\\Documents\\Eclipse\\ReliableTransportProtocol\\src\\";
+	private static String netEmuIP;// = null;
+	private static String netEmuPort;// = null;
+	private static String clientPort;// = null;
+	private static String filename;// = null;
+	private static File file;// = null;
+	private static InetAddress host;// = null;
+	private static RTPclient rtpc;
 	
 	public static void main(String[] args) throws Exception{
 		System.out.println("-----FTA Client is Running------");
-		boolean run = true;
+		//boolean run = true;
 		
 		//DatagramSocket sock = null;
 		
-		try{			
-			while(run){
+		try{		
+			System.out.println(args.length);
+			//while(run){
 				
 				//this is UDP needs to be in the RTP class
 				//sock = new DatagramSocket();
@@ -23,26 +32,70 @@ public class FTAclient {
 				//Declare Variables to be interpreted
 
 				
-				String netEmuIP = null;
-				String netEmuPort = null;
-				String clientPort = null;
-				String filename = null;
-				File file = null;
-				InetAddress host = null;
+
 				//The first thing that we test is whether or not the input is even valid then we can start making decisions
 				
 				
 				//I need to make sure and check that I have the IP and ports before I begin the file transfer
 				//System.out.println(args.length);
-				if(args.length == 2){//this is a check to make sure that we have done the XAP command already
-					if(args[0].equalsIgnoreCase("connect-get")){
-						filename = args[1];
-						
-						//Hailey can help since she got a file to transfer
-						file = new File("local_" + filename);//change depending on what the file is in the folder
-						if(file.exists()){
-							System.out.println("Cannot write to disk");
-						}	
+				
+				if(args.length == 3){
+					clientPort = args[0];
+					if(Integer.parseInt(clientPort) % 2 == 0){//it is even
+						netEmuIP = args[1];
+						netEmuPort = args[2];
+						rtpc = new RTPclient(netEmuIP, netEmuPort, clientPort);
+						//host = InetAddress.getByName(netEmuIP);	
+						//add catch for last two varibles to make sure that they are valid
+						//RTPclient client = new RTPclient(clientPort, netEmuIP, netEmuPort);
+						//System.out.println(clientPort + netEmuIP + netEmuPort);
+					}
+					else{
+						//add a try again statement
+						System.out.println("The client port number is odd and it needs to be even");
+						//run = false;
+						//break;
+					}
+					//This is done in the client for RTP, we cannot connect with UDP on this level yet
+		            //sock = new DatagramSocket();
+		            //sock.setSoTimeout(3000);
+		            host = InetAddress.getByName(netEmuIP);			
+		            //end rtpclient
+	            	waitForCommand();
+	            	//int response = waitForCommand
+	            	//translateMessage(response);
+				}
+				else{
+					System.out.println("You have not made a valid entry. Please re-input your command.");
+					//run = false;
+					//main(args);
+				}
+	        	
+		}
+		finally{
+			//this should prompt the user to enter another command if we need to check for cases
+			System.out.println("here");
+		}
+				
+	}//end main
+
+	private static void waitForCommand() throws Exception {
+		
+		BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+		System.out.println("Enter the command (connect-get *filename):   ");
+		String input = userInput.readLine();
+		String[] args = input.split(" ");
+		boolean run = true;
+		
+		while(run){
+			if(args.length == 2){//this is a check to make sure that we have done the XAP command already
+				if(args[0].equalsIgnoreCase("connect-get")){
+					filename = args[1];
+					System.out.println(filename);
+					//Hailey can help since she got a file to transfer
+					file = new File(directory + filename);//change depending on what the file is in the folder
+					if(file.exists()){
+						System.out.println("THE FILE: ("+ filename + ") exists.");
 						/*
 						DatagramPacket connect = null;
 						DatagramPacket recieved = null;
@@ -53,8 +106,8 @@ public class FTAclient {
 						//add implementation for retrieving file from FTA server
 						//FTAserver ftaS = new FTAserver();
 						
-						RTPclient rtpc = new RTPclient(netEmuIP, netEmuPort, clientPort);
-						transferStatus(rtpc.downloadFromServer(filename));
+						
+						rtpc.downloadFromServer(filename);
 						/*
 						int filesize = 65535; 
 						int bytesRead; 
@@ -84,47 +137,54 @@ public class FTAclient {
 						socket.close();
 						*/
 						System.out.println("Done. File: " + filename + " retrived.");
-						
-						//The client needs to disconnect from the server for UNIDIRECTIONAL
-					}
-					else{
-						System.out.println("Incorrect command: please enter another command.");
-					}
-				}
-				else if(args.length == 3){
-					clientPort = args[0];
-					if(Integer.parseInt(clientPort) % 2 == 0){//it is even
-						netEmuIP = args[1];
-						netEmuPort = args[2];
-						//host = InetAddress.getByName(netEmuIP);	
-						//add catch for last two varibles to make sure that they are valid
-						//RTPclient client = new RTPclient(clientPort, netEmuIP, netEmuPort);
-					}
-					else{
-						//add a try again statement
-						System.out.println("The client port number is odd and it needs to be even");
 						run = false;
-						break;
+					}	
+					else{
+						System.out.println("File does not exist in the provided directory");
+						//try again function if file does not exist
+						run = false;
 					}
-					//This is done in the client for RTP, we cannot connect with UDP on this level yet
-		            //sock = new DatagramSocket();
-		            //sock.setSoTimeout(3000);
-		            host = InetAddress.getByName(netEmuIP);			
-		            //end rtpclient
+					//The client needs to disconnect from the server for UNIDIRECTIONAL
 				}
 				else{
-					System.out.println("You have not made a valid entry. Please re-input your command.");
-					run = false;
-					//main(args);
+					System.out.println("Incorrect command: please enter another command.");
+					input = userInput.readLine();
+					args = input.split(" ");
 				}
 			}
+			/*
+			else if(args.length == 3){
+				clientPort = args[0];
+				if(Integer.parseInt(clientPort) % 2 == 0){//it is even
+					netEmuIP = args[1];
+					netEmuPort = args[2];
+					//host = InetAddress.getByName(netEmuIP);	
+					//add catch for last two varibles to make sure that they are valid
+					//RTPclient client = new RTPclient(clientPort, netEmuIP, netEmuPort);
+					//System.out.println(clientPort + netEmuIP + netEmuPort);
+				}
+				else{
+					//add a try again statement
+					System.out.println("The client port number is odd and it needs to be even");
+					run = false;
+					//break;
+				}
+				//This is done in the client for RTP, we cannot connect with UDP on this level yet
+	            //sock = new DatagramSocket();
+	            //sock.setSoTimeout(3000);
+	            host = InetAddress.getByName(netEmuIP);			
+	            //end rtpclient
+	        	
+			}
+			*/
+			else{
+				System.out.println("Enter a command: ");
+				input = userInput.readLine();
+				args = input.split(" ");
+				//main(args);
+			}
 		}
-		catch(SocketException e){
-			System.out.println("Unable to open the socket");
-			System.exit(1);
-		}
-	}//end main
-
+	}
 	private static void transferStatus(int message) {
 		if(message == 1){
 			//we got a successful transfer
@@ -149,8 +209,8 @@ the end of the transfer.
 FTA CLIENT
 Command-line: 	fta-client X A P
 The command-line arguments are:
-X: the port number at which the fta-client’s UDP socket should bind to (even number). 
-	Please remember that this port number should be equal to the server’s port number minus 1.
+X: the port number at which the fta-clientâ€™s UDP socket should bind to (even number). 
+	Please remember that this port number should be equal to the serverâ€™s port number minus 1.
 A: the IP address of NetEmu
 P: the UDP port number of NetEmu
 Command: 		connect (only for projects that support bi-directional transfers)
@@ -160,7 +220,7 @@ The FTA-client downloads file F from the server (if F exists in the same directo
 Command: 		post F (only for projects that support bi-directional transfers)
 The FTA-client uploads file F to the server (if F exists in the same directory as the fta-client executable).
 Command: 		window W (only for projects that support pipelined transfers)
-W: the maximum receiver’s window-size at the FTA-Client (in segments).
+W: the maximum receiverâ€™s window-size at the FTA-Client (in segments).
 Command: 		disconnect (only for projects that support bi-directional transfers)
 The FTA-client terminates gracefully from the FTA-server. 
 */
