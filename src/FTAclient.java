@@ -7,7 +7,7 @@ import java.net.*;
  *
  */
 public class FTAclient {
-	private static String directory = "C:\\Users\\Andrew Ford\\Documents\\Eclipse\\ReliableTransportProtocol\\src\\";
+	//private static String directory = "C:\\Users\\Andrew Ford\\Documents\\Eclipse\\ReliableTransportProtocol\\src\\";
 	private static String netEmuIP;// = null;
 	private static String netEmuPort;// = null;
 	private static String clientPort;// = null;
@@ -15,6 +15,7 @@ public class FTAclient {
 	private static File file;// = null;
 	private static InetAddress host;// = null;
 	private static RTPclient rtpc;
+	private static int windowSize;
 	
 	public static void main(String[] args) throws Exception{
 		System.out.println("-----FTA Client is Running------");
@@ -30,9 +31,6 @@ public class FTAclient {
 				//sock = new DatagramSocket();
 				//sock.setSoTimeout(5000);//change later
 				//Declare Variables to be interpreted
-
-				
-
 				//The first thing that we test is whether or not the input is even valid then we can start making decisions
 				
 				
@@ -93,7 +91,7 @@ public class FTAclient {
 					filename = args[1];
 					System.out.println(filename);
 					//Hailey can help since she got a file to transfer
-					file = new File(directory + filename);//change depending on what the file is in the folder
+					file = new File(filename);//change depending on what the file is in the folder directory + 
 					if(file.exists()){
 						System.out.println("THE FILE: ("+ filename + ") exists.");
 						/*
@@ -145,6 +143,10 @@ public class FTAclient {
 						run = false;
 					}
 					//The client needs to disconnect from the server for UNIDIRECTIONAL
+				}
+				else if(args[0].equalsIgnoreCase("window")){
+					windowSize = Integer.parseInt(args[1]);
+					rtpc.setWindowSize(windowSize);
 				}
 				else{
 					System.out.println("Incorrect command: please enter another command.");
