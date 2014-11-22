@@ -1,6 +1,8 @@
 import java.io.*;
 import java.net.*;
-
+import java.util.Arrays;
+import java.io.FileInputStream;
+import java.lang.Object;
 /**
  * This is the server class for the RTP 
  * 
@@ -23,7 +25,7 @@ public class RTPserver
 	int serverPort;
 	int clientPort;
 	int timeout = 3000;
-	
+	int windowSize;
 	DatagramSocket serverSocket = null;
 	boolean connectionUp = false;
     //public static void main(String args[]) throws SocketException
@@ -41,30 +43,38 @@ public class RTPserver
 		System.out.println("RTPserver is listening...");
 		setUp();
 	}
+	public void setWindowSize(int windowSize){
+		this.windowSize = windowSize;
+	}
     public void setUp() throws Exception
     {
     	System.out.println("In setUp");
     	serverSocket = new DatagramSocket(serverPort);   
     	//serverSocket.setSoTimeout(timeout);//timeout for acks
     	
-    	InetAddress emulatorIP = InetAddress.getByName(netEmuIp);		
+    	//InetAddress emulatorIP = InetAddress.getByName(netEmuIp);		
         try
         {	
             
     		byte[] buffer = new byte[64];
-    		DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
-    		serverSocket.receive(incoming);
+    		DatagramPacket incomingPackets = new DatagramPacket(buffer, buffer.length);
+    		serverSocket.receive(incomingPackets);
     		//receive the packets from the client
-    		clientPort = incoming.getPort();
+    		clientPort = incomingPackets.getPort();
+    		System.out.println(clientPort);
     		if(validateClientPort(clientPort) == false){
     			System.out.println("ERROR: The client port is not (serverPort - 1)");
     		}
-    		byte[] data = incoming.getData();
+    		byte[] data = incomingPackets.getData();
+    		String strFile = new String(data);
+    		FileInputStream fileInputStream = null;
+            String s = "file.txt";
     		//System.out.println(data[0]);    -    This will print out the ASCII value of the first character in the data array
-    		System.out.println(data.length);
+    		//System.out.println(data.length);
     		
-    		String s = new String(data, 0, incoming.getLength());
-    		String answer = getFile(s);
+    		//String s = new String(data, 0, incomingPackets.getLength());
+    		//String answer = getFile(s);
+    		
     		
     		/**
     		 * 
@@ -73,19 +83,48 @@ public class RTPserver
     		 * 
     		 * 
     		 */
+            File file = new File(strFile);
+            byte[] bFile = new byte[(int) file.length()];
+            
+            RTPPacket p = new RTPPacket((int)file.length());
+            
+      	    fileInputStream = new FileInputStream(file);
+    	    fileInputStream.read(bFile); 	    
+    	    fileInputStream.close();
+    	    
+    	    int counter = 0;
+    	    int maxLength = 6;
+    	    DatagramPacket dp;
+    	    
+    	    /*
+	    	while (counter < bFile.length -1){
+	    		
+	    		byte[] aFile = new byte[maxLength];
+	    		if (bFile.length > aFile.length){
+	    			//aFile = ArrayUtils.concat(head, Arrays.copyOfRange(bFile, counter, maxLength+counter));
+	    			aFile = Arrays.copyOfRange(bFile,counter, maxLength + counter);
+	    			counter = counter + maxLength;
+	    		}
+	    		
+        
+	    		//create datagram packet to send back to the client
+	    		dp = new DatagramPacket(aFile , aFile.length , incomingPackets.getAddress() , incomingPackets.getPort());
+	    		serverSocket.send(dp);
+	    		
+	    	}
+    		*/
+    	    dp = new DatagramPacket(p.returnPacket() , p.returnPacket().length , incomingPackets.getAddress() , incomingPackets.getPort());
+    		serverSocket.send(dp);
     		
     		
-    		
-    		
-    		
-    		System.out.println(answer.length());
-    		
+    		//System.out.println(answer.length());
+    		/*
     		while(answer.length() > 5){
                 DatagramPacket send = new DatagramPacket(answer.getBytes() , answer.getBytes().length , incoming.getAddress(), incoming.getPort());
             	//	InetAddress.getByName(netEmuIp) , Integer.parseInt(netEmuPort));
                 System.out.println("sending responce from the server");
                 serverSocket.send(send);
-    		}
+    		}*/
     		//s or the incoming will be the filename
             //DatagramSocket serverSocket = new DatagramSocket(port);
             
@@ -94,10 +133,10 @@ public class RTPserver
     		//getFile(clientInput);
             //do math
             //create datagram packet to send back to the client
-            DatagramPacket send = new DatagramPacket(answer.getBytes() , answer.getBytes().length , incoming.getAddress(), incoming.getPort());
+           // DatagramPacket send = new DatagramPacket(answer.getBytes() , answer.getBytes().length , incomingPackets.getAddress(), incomingPackets.getPort());
             	//	InetAddress.getByName(netEmuIp) , Integer.parseInt(netEmuPort));
             System.out.println("sending responce from the server");
-            serverSocket.send(send);
+            //serverSocket.send(send);
             serverSocket.close();
         }
          
@@ -116,8 +155,8 @@ public class RTPserver
      * @throws IOException
      */
     private String getFile(String file) throws IOException{
-    	String directory = "C:\\Users\\Andrew Ford\\Documents\\Eclipse\\ReliableTransportProtocol\\src\\";
-    	BufferedReader reader = new BufferedReader(new FileReader(directory + file));
+    	//String directory = "C:\\Users\\Andrew Ford\\Documents\\Eclipse\\ReliableTransportProtocol\\src\\";
+    	BufferedReader reader = new BufferedReader(new FileReader(file));//directory + 
     	String line = null;
     	String result = "";
     	while((line = reader.readLine()) != null){
@@ -129,7 +168,7 @@ public class RTPserver
     }
     
     private boolean validateClientPort(int cp) {
-		if(serverPort - cp == 1){
+		if(serverPort - cp == 0){
 			return true;
 		}
 		return false;
