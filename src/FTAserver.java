@@ -19,9 +19,9 @@ public class FTAserver {
 		String serverPort;	
 		String netEmuIP;
 		String netEmuPort;
-		//int maxWindowSize;
+		int windowSize;
 		System.out.println(args.length);
-		RTPserver rtps;
+		RTPserver rtps = null;
 		try{
 			while(true){
 				//Based on the input from the command line we will figure out what the message will be.
@@ -38,7 +38,7 @@ public class FTAserver {
 							//check that there is 2 more elements in the user input
 							netEmuIP = args[1];
 							netEmuPort = args[2];
-							rtps = new RTPserver("127.0.0.1", "4000", Integer.parseInt(serverPort));
+							rtps = new RTPserver(netEmuIP, netEmuPort, Integer.parseInt(serverPort));
 							rtps.listen();
 							//sock = new DatagramSocket(serverPort);//create socket and bind to serverPort
 
@@ -59,7 +59,7 @@ public class FTAserver {
 //							}
 //							}
 						}
-				}
+					}
 					/*
 				else if(results.length == 1){
 					if(results[0].equalsIgnoreCase("terminate")){
@@ -113,9 +113,20 @@ public class FTAserver {
 					System.out.println("You have not made a valid entry. Please re-input your command.");
 				}
 				 */
-				
+			
+			else if(args.length == 2){
+				if(args[0].equalsIgnoreCase("window")){
+					windowSize = Integer.parseInt(args[1]);
+					if(rtps!=null){
+						rtps.setWindowSize(windowSize);
+					}	
+				}
+				else{
+					System.out.println("Do Nothing");
+				}
 				
 			}//end of while loop
+			}
 		}
 		catch(NumberFormatException e){
 			e.printStackTrace();
