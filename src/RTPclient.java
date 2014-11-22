@@ -21,6 +21,8 @@ public class RTPclient
 	String netEmuPort;
 	String filename;
 	String clientPort;
+	
+	int windowSize;
 	int timeout = 3000;
 	InetAddress emulatorIP;
 	DatagramSocket clientSocket = null;
@@ -44,6 +46,9 @@ public class RTPclient
 		setUp();
 		return 0;//return status of the download loss packets? duplicate? more to come
 	}
+	public void setWindowSize(int windowSize){
+		this.windowSize = windowSize;
+	}
 	public void setUp() throws Exception
     {
 		
@@ -54,18 +59,31 @@ public class RTPclient
     	emulatorIP = InetAddress.getByName(netEmuIp);
         try
         {
-        	while(connectionUp){
+        	//while(connectionUp){
         		//this will send the packet file
                 byte[] b = filename.getBytes();
-                DatagramPacket  dPacket = new DatagramPacket(b , b.length , emulatorIP , Integer.parseInt(netEmuPort));
+                DatagramPacket  dPacket = new DatagramPacket(b , b.length , emulatorIP , Integer.parseInt(clientPort));
                 clientSocket.send(dPacket);
-                
+                StringBuffer received = new StringBuffer("");
+
                 //this will recieve the responce from the server
-                byte[] buffer = new byte[64];
-                DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
-                clientSocket.receive(reply);     
-                byte[] data = reply.getData();
-                String received = new String(data, 0, reply.getLength());
+                int numPackets = 0;
+                while(numPackets < 5){
+	                byte[] buffer = new byte[6];
+	                DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
+	                clientSocket.setSoTimeout(2000);
+	                clientSocket.receive(reply);   
+	                String rec = new String(reply.getData());
+	                received.append(rec);
+	                numPackets++;
+	                System.out.println(rec);
+	                //byte[] data = reply.getData();
+                }
+                String s = received.toString();
+                Writer writer = new FileWriter(filename);
+                writer.write(s);
+                writer.close();
+                //String received = new String(data, 0, reply.getLength());
                 
                 //createPacket(newPacket, input_data);
                
@@ -75,7 +93,7 @@ public class RTPclient
                 // output from the server
                 System.out.println("From server: " + received);
                 clientSocket.close();	
-        	}
+        	//}
         }
         // catches if host is not valid
         catch(UnknownHostException e) {
