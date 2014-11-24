@@ -10,7 +10,7 @@ public class FTAserver {
 	public static void main(String[] args) throws Exception{
 		System.out.println("-----FTA Server is Running------");
 		
-		//DatagramSocket sock = null;
+		//DatagramSocket sock = null;6
 		//DatagramPacket answer;
 		//String answer;
 		String input;// = args[0];
@@ -34,7 +34,7 @@ public class FTAserver {
 						
 						serverPort = args[0];
 						
-						if(Integer.parseInt(serverPort) % 2 == 0){//check that server port is odd
+						if(Integer.parseInt(serverPort) % 2 == 1){//check that server port is odd
 							//check that there is 2 more elements in the user input
 							netEmuIP = args[1];
 							netEmuPort = args[2];
@@ -135,9 +135,10 @@ public class FTAserver {
             e.printStackTrace();
             
         }//end try catch
+        
 	}//end main
     private static boolean checkValidPort(int potentialPortNum) {
-    	System.out.println("lllllleeeee");
+    	
 		if(potentialPortNum < 0 || potentialPortNum > 65535){
 			return false;
 		}
