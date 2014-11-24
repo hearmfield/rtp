@@ -28,16 +28,13 @@ public class RTPserver
 	int windowSize;
 	DatagramSocket serverSocket = null;
 	boolean connectionUp = false;
-    //public static void main(String args[]) throws SocketException
 
 	public RTPserver(String netEmuIp, String netEmuPort, int serverPort) throws Exception{
 		System.out.println("Setting up RTPserver...");
 		this.netEmuIp = netEmuIp;
 		this.netEmuPort = netEmuPort;
 		this.serverPort = serverPort;
-		//this.filename = filename;
 		this.connectionUp = true;
-		//setUp();
 	}
 	public void listen() throws Exception{
 		System.out.println("RTPserver is listening...");
@@ -49,32 +46,32 @@ public class RTPserver
     public void setUp() throws Exception
     {
     	System.out.println("In setUp");
-    	serverSocket = new DatagramSocket(serverPort);   
-    	//serverSocket.setSoTimeout(timeout);//timeout for acks
-    	
-    	//InetAddress emulatorIP = InetAddress.getByName(netEmuIp);		
+    	serverSocket = new DatagramSocket(serverPort);   	
         try
         {	
             
     		byte[] buffer = new byte[64];
     		DatagramPacket incomingPackets = new DatagramPacket(buffer, buffer.length);
     		serverSocket.receive(incomingPackets);
-    		//receive the packets from the client
+    		
+    		//receive the packets from the client and some checks
     		clientPort = incomingPackets.getPort();
-    		System.out.println(clientPort);
+    		System.out.println("NetEmuPort is:  " + netEmuPort);
+    		System.out.println("NetEmuIP is:  "+ netEmuIp);
+    		
+    		/* The client port is 8000 as read from the server.
     		if(validateClientPort(clientPort) == false){
     			System.out.println("ERROR: The client port is not (serverPort - 1)");
     		}
+    		else{
+    			System.out.println("The Ports are 1 apart");
+    		}
+    		*/
     		byte[] data = incomingPackets.getData();
     		String strFile = new String(data);
+    		System.out.println("RTPserver "+ strFile);
     		FileInputStream fileInputStream = null;
             String s = "file.txt";
-    		//System.out.println(data[0]);    -    This will print out the ASCII value of the first character in the data array
-    		//System.out.println(data.length);
-    		
-    		//String s = new String(data, 0, incomingPackets.getLength());
-    		//String answer = getFile(s);
-    		
     		
     		/**
     		 * 
@@ -96,7 +93,7 @@ public class RTPserver
     	    int maxLength = 6;
     	    DatagramPacket dp;
     	    
-    	    /*
+    	    
 	    	while (counter < bFile.length -1){
 	    		
 	    		byte[] aFile = new byte[maxLength];
@@ -112,10 +109,10 @@ public class RTPserver
 	    		serverSocket.send(dp);
 	    		
 	    	}
-    		*/
+    		/*
     	    dp = new DatagramPacket(p.returnPacket() , p.returnPacket().length , incomingPackets.getAddress() , incomingPackets.getPort());
     		serverSocket.send(dp);
-    		
+    		*/
     		
     		//System.out.println(answer.length());
     		/*
