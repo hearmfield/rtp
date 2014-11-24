@@ -53,16 +53,17 @@ public class RTPclient
     {
 		
     	//creates a socket for the connection
-    	clientSocket = new DatagramSocket();   
+    	clientSocket = new DatagramSocket(Integer.parseInt(clientPort));   
     	clientSocket.setSoTimeout(timeout);//timeout for acks
     	
     	emulatorIP = InetAddress.getByName(netEmuIp);
         try
         {
         	//while(connectionUp){
+        	
         		//this will send the packet file
                 byte[] b = filename.getBytes();
-                DatagramPacket  dPacket = new DatagramPacket(b , b.length , emulatorIP , Integer.parseInt(clientPort));
+                DatagramPacket  dPacket = new DatagramPacket(b , b.length , emulatorIP , Integer.parseInt(netEmuPort));
                 clientSocket.send(dPacket);
                 StringBuffer received = new StringBuffer("");
 
@@ -179,6 +180,9 @@ public class RTPclient
     	// randomly generate a 32bit number 
     	Random r = new Random();
     	 return r.nextInt();
+    }
+    public void checksum(){
+    	
     }
     
     
