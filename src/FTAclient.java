@@ -43,10 +43,6 @@ public class FTAclient {
 						netEmuIP = args[1];
 						netEmuPort = args[2];
 						rtpc = new RTPclient(netEmuIP, netEmuPort, clientPort);
-						//host = InetAddress.getByName(netEmuIP);	
-						//add catch for last two varibles to make sure that they are valid
-						//RTPclient client = new RTPclient(clientPort, netEmuIP, netEmuPort);
-						//System.out.println(clientPort + netEmuIP + netEmuPort);
 					}
 					else{
 						//add a try again statement
@@ -92,12 +88,8 @@ public class FTAclient {
 					System.out.println(filename);
 					//Hailey can help since she got a file to transfer
 					file = new File(filename);//change depending on what the file is in the folder directory + 
-					if(file.exists()){
+					if(!file.exists()){
 						System.out.println("THE FILE: ("+ filename + ") exists.");
-						/*
-						DatagramPacket connect = null;
-						DatagramPacket recieved = null;
-						*/
 						System.out.println("Retrieving File: " + filename + " from server...");
 						System.out.println("Connecting to RTP client...");
 						
