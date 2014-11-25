@@ -3,10 +3,12 @@ import java.net.*;
 import java.util.Arrays;
 import java.io.FileInputStream;
 import java.lang.Object;
+import java.util.Random;
 /**
  * This is the server class for the RTP 
  * 
  * @author Hailey Armfield
+ * @author Andrew Ford
  *
  */
 public class RTPserver
@@ -38,77 +40,94 @@ public class RTPserver
 	}
 	public void listen() throws Exception{
 		System.out.println("RTPserver is listening...");
-		setUp();
+		run();
 	}
 	public void setWindowSize(int windowSize){
 		this.windowSize = windowSize;
 	}
-    public void setUp() throws Exception
+    public void run() throws Exception
     {
-    	System.out.println("In setUp");
-    	serverSocket = new DatagramSocket(serverPort);   	
+    	System.out.println("In Server setUp");
+    	
+    	serverSocket = new DatagramSocket(serverPort);  //Binded Port for Server 	
         try
         {	
-            
     		byte[] buffer = new byte[64];
     		DatagramPacket incomingPackets = new DatagramPacket(buffer, buffer.length);
     		serverSocket.receive(incomingPackets);
-    		
-    		//receive the packets from the client and some checks
-    		clientPort = incomingPackets.getPort();
-    		System.out.println("NetEmuPort is:  " + netEmuPort);
-    		System.out.println("NetEmuIP is:  "+ netEmuIp);
-    		
-    		/* The client port is 8000 as read from the server.
-    		if(validateClientPort(clientPort) == false){
-    			System.out.println("ERROR: The client port is not (serverPort - 1)");
-    		}
-    		else{
-    			System.out.println("The Ports are 1 apart");
-    		}
-    		*/
+    		System.out.println("We got data");
+    		//some checks to make sure we are receiving the correct route through the Network emulator
+
     		byte[] data = incomingPackets.getData();
     		String strFile = new String(data);
-    		System.out.println("RTPserver "+ strFile);
+    		System.out.println("RTPserver strfile:  "+ strFile);
     		FileInputStream fileInputStream = null;
-            String s = "file.txt";
+            //String s = "file.txt";
     		
-    		/**
-    		 * 
-    		 * 
-    		 * WE HAVE RECIEVED THE INPUT FROM THE FILE NOW WE NEED TO TRANSFER IT TO THE CLIENT IN PACKETS 
-    		 * 
-    		 * 
-    		 */
             File file = new File(strFile);
-            byte[] bFile = new byte[(int) file.length()];
+            //byte[] bFile = new byte[(int) file.length()];
             
             RTPPacket p = new RTPPacket((int)file.length());
             
       	    fileInputStream = new FileInputStream(file);
-    	    fileInputStream.read(bFile); 	    
+    	    fileInputStream.read(p.payload); 	    
     	    fileInputStream.close();
     	    
-    	    int counter = 0;
-    	    int maxLength = 6;
-    	    DatagramPacket dp;
+            DatagramPacket receiveAck = new DatagramPacket(buffer,buffer.length);
+            
+            int payloadIndex = 0;
+            int sentCounter = 0;
+            int ackCounter = 0; //compare to sent counter
+            int lastAckNumber; //resend if one is missing
+            DatagramPacket dp;
     	    
-    	    
-	    	while (counter < bFile.length -1){
-	    		
-	    		byte[] aFile = new byte[maxLength];
-	    		if (bFile.length > aFile.length){
-	    			//aFile = ArrayUtils.concat(head, Arrays.copyOfRange(bFile, counter, maxLength+counter));
-	    			aFile = Arrays.copyOfRange(bFile,counter, maxLength + counter);
-	    			counter = counter + maxLength;
-	    		}
-	    		
-        
-	    		//create datagram packet to send back to the client
-	    		dp = new DatagramPacket(aFile , aFile.length , incomingPackets.getAddress() , incomingPackets.getPort());
-	    		serverSocket.send(dp);
-	    		
-	    	}
+           
+    	    //SENDER WAITS FOR ACKS - SELECTIVE REPEAT PIPELINED            
+            while (payloadIndex < p.payload.length -1){//this is 0 to the files full length
+            	System.out.println(p.payload.length);
+            	System.out.println("Sending pipelined packets");
+            	
+	                byte[] aFile = new byte[p.mss];
+	                //if (p.payload.length + p.header_length > aFile.length){
+	                if ((p.getDataLength()-payloadIndex)/(p.mss-p.header_length) > 0){
+	                	System.out.println("here");
+	                    p.increaseSequenceNumber();
+	                    System.arraycopy(p.header, 0, aFile, 0, p.header_length);
+	                    System.arraycopy(p.payload, payloadIndex, aFile, p.header_length, p.mss - p.header_length);
+	                    payloadIndex = payloadIndex + (p.mss-p.header_length);      
+	                }
+	                //case for last packet that does not have the same length payload
+	                else{   
+	                    p.increaseSequenceNumber();
+	                    System.arraycopy(p.header, 0, aFile, 0, p.header_length);
+	                    System.arraycopy(p.payload, payloadIndex, aFile, p.header_length, p.payload.length - payloadIndex);
+	                    payloadIndex = payloadIndex + (p.mss-p.header_length);  
+	                }
+	                //create datagram packet to send back to the client
+	                dp = new DatagramPacket(aFile , aFile.length , incomingPackets.getAddress() , incomingPackets.getPort());
+	                serverSocket.send(dp);
+	                sentCounter++;
+            	 
+                /*try {
+                    serverSocket.wait();
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }*/
+                serverSocket.receive(receiveAck);
+                byte[] arr = receiveAck.getData();
+                RTPPacket receivedPacket = new RTPPacket(arr);
+                System.out.println("Received Packet: " + receivedPacket.getAckNumber());
+                //ackCounter++;
+                //resend the packet because the client did not get it this is for stop and wait
+//                if(receivedPacket.getAckNumber() != ackCounter){
+//                	serverSocket.send(dp);
+//                }
+//                else{
+//                	ackCounter++;
+//                }
+                
+            }
     		/*
     	    dp = new DatagramPacket(p.returnPacket() , p.returnPacket().length , incomingPackets.getAddress() , incomingPackets.getPort());
     		serverSocket.send(dp);
@@ -176,21 +195,14 @@ public class RTPserver
      * @param result
      * @return
      */
-    public static boolean checkNum(int result){
+    public static boolean checkValidPortRangef(int result){
 	   	if (result<0 || result>65535){
 	       	return false;
 	       }
 	   	return true;
    }
-    
-    public static void connEstablishment(){
-    	//wait for client
-    	
-    	//receive syn 
-    	//send syn+ack
-    	
-    	//wait for ack
-    	
-    	//recieve ack
-    }
+	public void terminate() {
+		// This will need to close the socket
+		serverSocket.close();
+	}
 }
