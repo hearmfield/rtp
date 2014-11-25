@@ -24,7 +24,7 @@ public class FTAclient {
 		//DatagramSocket sock = null;
 		
 		try{		
-			System.out.println(args.length);
+			//System.out.println(args.length);
 			//while(run){
 				
 				//this is UDP needs to be in the RTP class
@@ -89,7 +89,6 @@ public class FTAclient {
 					//Hailey can help since she got a file to transfer
 					file = new File(filename);//change depending on what the file is in the folder directory + 
 					if(!file.exists()){
-						System.out.println("THE FILE: ("+ filename + ") exists.");
 						System.out.println("Retrieving File: " + filename + " from server...");
 						System.out.println("Connecting to RTP client...");
 						
