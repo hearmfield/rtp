@@ -12,16 +12,13 @@ public class FTAserver {
 		
 		//DatagramSocket sock = null;6
 		//DatagramPacket answer;
-		//String answer;
-		String input;// = args[0];
-		// = inFromUser.split(" ");
 		
 		String serverPort;	
 		String netEmuIP;
 		String netEmuPort;
 		int windowSize;
-		System.out.println(args.length);
 		RTPserver rtps = null;
+		
 		try{
 			while(true){
 				//Based on the input from the command line we will figure out what the message will be.
@@ -39,10 +36,11 @@ public class FTAserver {
 							netEmuIP = args[1];
 							netEmuPort = args[2];
 							rtps = new RTPserver(netEmuIP, netEmuPort, Integer.parseInt(serverPort));
+							System.out.println("Connecting to RTP Server : "); 
 							rtps.listen();
 							//sock = new DatagramSocket(serverPort);//create socket and bind to serverPort
 
-							System.out.println("Connecting to RTP Server : "); 
+							
 							
 //							byte[] buffer = new byte[1024];//not sure about the size of the byte buffer
 //							DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
@@ -60,74 +58,31 @@ public class FTAserver {
 //							}
 						}
 					}
-					/*
-				else if(results.length == 1){
-					if(results[0].equalsIgnoreCase("terminate")){
+					else if(checkValidPort(Integer.parseInt(args[0])) == false){
+						throw new NumberFormatException("Potential Port Number is not in range.");
+					}	
+				}
+				else if(args.length == 2){
+					if(args[0].equalsIgnoreCase("window")){
+						windowSize = Integer.parseInt(args[1]);
+						if(rtps!=null){
+							rtps.setWindowSize(windowSize);
+						}	
+					}
+				}
+				else if(args.length == 1){
+					if(args[0].equalsIgnoreCase("terminate")){
 						rtps.terminate();
 						System.out.println("Done.");
 						break;
 					}
-					else if(results[0].equalsIgnoreCase("window")){
-						//for pipelined projects
-						maxWindowSize = Integer.parseInt(results[1]);
-						
-					}
-				}
-*/
-				
-				}
-				else if(checkValidPort(Integer.parseInt(args[0])) == false){
-					throw new NumberFormatException("Potential Port Number is not in range.");
-				}
-				/*
-					if(serverPort % 2 == 1 && serverPort - clientPort = 1){
-				
-						//byte [] bytearray = new byte [(int)fileToClient.length()]; 
-						
-						File transferFile = new File (fileToClient);
-						System.out.println("Sending Files..."); 
-						os.write(bytearray,0,bytearray.length); 
-						System.out.println("File transfer complete");
-						//The port of the server has to be one more than the clients to therefore it needs to be odd.
-					}
-					else{
-						System.out.println("The client port number is odd and it needs to be even");
-					}
-							
-				}
-				else if(results.length == 1){
-					if(results[0].equals("terminate")){		
-						System.out.println("Terminating the FTA server...");
-						
-						os.flush();
-						socket.close();
-						
-						System.out.println("Done.");
-						
-					}
-					else{
-						System.out.println("Incorrect command: please enter another command.");
-					}
-				}
-				else{
-					System.out.println("You have not made a valid entry. Please re-input your command.");
-				}
-				 */
-			
-			else if(args.length == 2){
-				if(args[0].equalsIgnoreCase("window")){
-					windowSize = Integer.parseInt(args[1]);
-					if(rtps!=null){
-						rtps.setWindowSize(windowSize);
-					}	
 				}
 				else{
 					System.out.println("Do Nothing");
+					//reenter a command
 				}
-				
 			}//end of while loop
-			}
-		}
+		}//end try
 		catch(NumberFormatException e){
 			e.printStackTrace();
 		}
