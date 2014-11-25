@@ -27,7 +27,6 @@ public class RTPclient
 	InetAddress emulatorIP;
 	DatagramSocket clientSocket = null;
 	boolean connectionUp = false;
-    //public static void main(String args[]) throws SocketException
 
 	public RTPclient(String netEmuIp, String netEmuPort, String clientPort) throws Exception{
 		System.out.println("Setting up RTPclient...");
@@ -35,13 +34,11 @@ public class RTPclient
 		this.netEmuIp = netEmuIp;
 		this.netEmuPort = netEmuPort;
 		this.clientPort = clientPort;
-		//this.filename = filename;
 		this.connectionUp = true;
 		
 	}
 	public int downloadFromServer(String file) throws Exception{
 		filename = file;
-		System.out.println("download");
 		//if download was successful then we return a 1 to the FTA client, 0 otherwise
 		setUp();
 		return 0;//return status of the download loss packets? duplicate? more to come
@@ -51,10 +48,10 @@ public class RTPclient
 	}
 	public void setUp() throws Exception
     {
-		
-    	//creates a socket for the connection
+		System.out.println("In the client setup");
+    	//creates a socket for the connection which will be at 4000
     	clientSocket = new DatagramSocket(Integer.parseInt(clientPort));   
-    	clientSocket.setSoTimeout(timeout);//timeout for acks
+    	//clientSocket.setSoTimeout(timeout);//timeout for acks
     	
     	emulatorIP = InetAddress.getByName(netEmuIp);
         try
@@ -62,14 +59,75 @@ public class RTPclient
         	//while(connectionUp){
         	
         		//this will send the packet file
-                byte[] b = filename.getBytes();
+                byte[] b = filename.getBytes();//user entered file name at the FTAclient command
                 DatagramPacket  dPacket = new DatagramPacket(b , b.length , emulatorIP , Integer.parseInt(netEmuPort));
-                clientSocket.send(dPacket);
+                clientSocket.send(dPacket);//send the file to be downloaded to the netEmu then to the server
                 StringBuffer received = new StringBuffer("");
 
                 //this will recieve the responce from the server
-                int numPackets = 0;
-                while(numPackets < 5){
+                byte[] buffer = new byte[64];
+                DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
+                DatagramPacket ackPacket;
+                //n is the window size
+                int n = 0;
+                int timeout = 5000;
+                RTPPacket p = new RTPPacket();
+                clientSocket.setSoTimeout(timeout);
+                
+                clientSocket.receive(reply);
+                //System.out.println("Got message from the server");
+                byte[] response = reply.getData();
+                p = new RTPPacket(response);
+                
+                //System.out.println("Sequence Number is: "+ p.getSequenceNumber());
+                
+                String rec = new String(p.getPayload());
+                int lastSequenceNumber = 0;
+                received.append(rec);
+                n++;//we recrived our first packet
+                
+           		// if the first packet is received correctly
+           		p.setAckBit();
+           		p.setAckNumber();
+
+        		ackPacket = new DatagramPacket(p.header , p.header.length , emulatorIP , Integer.parseInt(netEmuPort));
+        		clientSocket.send(ackPacket);
+        		System.out.println("From server: " + received);
+                //int numPackets = 0;
+           		do{
+                	System.out.println(n);
+                	try{
+                		clientSocket.receive(reply); 
+	                    response = reply.getData();
+	                    p = new RTPPacket(response);
+	                    /*Test for out of order packets
+	                    if(lastSequenceNumber == p.getSequenceNumber() - 1){
+	                    	
+	                    }
+	                    */
+	                    System.out.println("Sequence Number: " + p.getSequenceNumber());
+	                   
+	                	rec = new String(p.getPayload());
+	                	System.out.println(p.payload.length);
+	                	received.append(rec);
+	                	n++;
+	                	
+	                	//if received correctly?
+	                	p.setAckBit();
+	                	p.setAckNumber();
+	                	//send an Ack to the server
+	                	if(p.checkAck() == true){
+	                		System.out.println("sending ACK");
+	                		ackPacket = new DatagramPacket(p.header , p.header.length , emulatorIP , Integer.parseInt(netEmuPort));
+	                		clientSocket.send(ackPacket);
+	                	}
+	                	System.out.println("From server: " + received);
+	                	lastSequenceNumber = p.getSequenceNumber();
+                	}
+                	catch (SocketTimeoutException e) {
+                	       continue;
+                	}
+                	/*
 	                byte[] buffer = new byte[6];
 	                DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
 	                clientSocket.setSoTimeout(2000);
@@ -79,10 +137,17 @@ public class RTPclient
 	                numPackets++;
 	                System.out.println(rec);
 	                //byte[] data = reply.getData();
+	                 
+	                 */
                 }
+           		while(n < p.getNumberOfPackets());
+                
                 String s = received.toString();
                 Writer writer = new FileWriter(filename);
                 writer.write(s);
+                
+                System.out.println("From Server " + s);
+                clientSocket.close();
                 writer.close();
                 //String received = new String(data, 0, reply.getLength());
                 
@@ -115,7 +180,7 @@ public class RTPclient
         			try {
 						String ui = userInput.readLine();
 						if(ui.equalsIgnoreCase("retry")){
-							
+							setUp();
 						}
 						else if(ui.equalsIgnoreCase("exit")){
 							clientSocket.close();
@@ -129,7 +194,7 @@ public class RTPclient
         
         catch(IOException e)
         {
-        	System.err.println("Invalid Command");
+        	System.err.println("IO Invalid Command");
         	clientSocket.close();	
         }
         
@@ -141,7 +206,7 @@ public class RTPclient
     }
  
 
-    
+    //private int getLast
     /**
      * Creates the connection establishment through the three way handshake
      */
@@ -188,140 +253,6 @@ public class RTPclient
     
 }
 
-
-/**
-import java.io.*;
-import java.net.*;
-//import org.apache.*;
-
-public class FTAclient {
-	
-	public static void main(String[] args) throws Exception{
-		System.out.println("-----FTA Client is Running------");
-		//DatagramSocket sock = null;
-		
-		try{			
-			while(true){
-				
-				//this is UDP needs to be in the RTP class
-				//sock = new DatagramSocket();
-				//sock.setSoTimeout(5000);//change later
-				//Declare Variables to be interpreted
-				String inputFromUser;
-				String[] results;
-				
-				String netEmuIP = null;
-				String netEmuPort = null;
-				String clientPort = null;
-				String filename = null;
-				File file = null;
-				InetAddress host = null;
-				//The first thing that we test is whether or not the input is even valid then we can start making decisions
-				inputFromUser = args[0];
-				results = inputFromUser.split(" ");
-				
-				//I need to make sure and check that I have the IP and ports before I begin the file transfer
-				
-				if(results.length == 2){//this is a check to make sure that we have done the XAP command already
-					if(results[0].equalsIgnoreCase("connect-get")){
-						filename = results[1];
-						
-						//Hailey can help since she got a file to transfer
-						file = new File("local_" + filename);//change depending on what the file is in the folder
-						if(file.exists()){
-							System.out.println("Cannot write to disk");
-						}	
-						
-						DatagramPacket connect = null;
-						DatagramPacket recieved = null;
-						
-						System.out.println("Retrieving File: " + filename + " from server...");
-						System.out.println("Connecting to RTP client...");
-						
-						//add implementation for retrieving file from FTA server
-						//FTAserver ftaS = new FTAserver();
-						
-						RTPclient rtpc = new RTPclient(netEmuIP, netEmuPort, clientPort);
-						transferStatus(rtpc.downloadFromServer(file));
-						/*
-						int filesize = 65535; 
-						int bytesRead; 
-						int numBytesRead = 0; 
-						
-						Socket socket = new Socket(netEmuIP, Integer.parseInt(netEmuPort)); 
-						
-						byte [] buffer = new byte [filesize]; 
-						//this is Tcp
-						InputStream is = socket.getInputStream(); 
-						FileOutputStream fos = new FileOutputStream(filename); 
-						BufferedOutputStream bos = new BufferedOutputStream(fos); 
-						bytesRead = is.read(buffer,0,buffer.length); 
-						numBytesRead = bytesRead; 
-						//end of TCP
-						do{ 
-							bytesRead = is.read(buffer, numBytesRead, (buffer.length-numBytesRead)); 
-							if(bytesRead >= 0) 
-								numBytesRead += bytesRead; 
-						} 
-						while(bytesRead > -1); 
-						
-						bos.write(buffer, 0 , numBytesRead); 
-						
-						bos.flush(); 
-						bos.close(); 
-						socket.close();
-						
-						System.out.println("Done. File: " + filename + " retrived.");
-						
-						//The client needs to disconnect from the server for UNIDIRECTIONAL
-					}
-					else{
-						System.out.println("Incorrect command: please enter another command.");
-					}
-				}
-				else if(results.length == 3){
-					clientPort = results[0];
-					if(Integer.parseInt(clientPort) % 2 == 0){//it is even
-						netEmuIP = results[1];
-						netEmuPort = results[2];
-						//host = InetAddress.getByName(netEmuIP);	
-						//add catch for last two varibles to make sure that they are valid
-						//RTPclient client = new RTPclient(clientPort, netEmuIP, netEmuPort);
-					}
-					else{
-						//add a try again statement
-						System.out.println("The client port number is odd and it needs to be even");
-						break;
-					}
-					//This is done in the client for RTP, we cannot connect with UDP on this level yet
-		            //sock = new DatagramSocket();
-		            //sock.setSoTimeout(3000);
-		            host = InetAddress.getByName(netEmuIP);			
-		            //end rtpclient
-				}
-				else{
-					System.out.println("You have not made a valid entry. Please re-input your command.");
-					//main(args);
-				}
-			}
-		}
-		catch(SocketException e){
-			System.out.println("Unable to open the socket");
-			System.exit(1);
-		}
-	}//end main
-
-	private static void transferStatus(int message) {
-		if(message == 1){
-			//we got a successful transfer
-		}
-		else{
-			//we failed
-		}
-		
-		
-	}
-}//end class
 
 /**
  * Command: 		connect-get F  (only for projects that do NOT support bi-directional transfers)
