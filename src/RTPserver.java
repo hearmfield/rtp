@@ -27,7 +27,7 @@ public class RTPserver
 	int serverPort;
 	int clientPort;
 	int timeout = 3000;
-	int windowSize;
+	int windowSize = 3;
 	DatagramSocket serverSocket = null;
 	boolean connectionUp = false;
 
@@ -76,58 +76,67 @@ public class RTPserver
             DatagramPacket receiveAck = new DatagramPacket(buffer,buffer.length);
             
             int payloadIndex = 0;
-            int sentCounter = 0;
-            int ackCounter = 0; //compare to sent counter
-            int lastAckNumber; //resend if one is missing
-            DatagramPacket dp;
+            int outstandingCounter = 0;
+    	    int firstSeqNum = 0;
+    	    int lastAckNumber = 0;
     	    
-           
-    	    //SENDER WAITS FOR ACKS - SELECTIVE REPEAT PIPELINED            
-            while (payloadIndex < p.payload.length -1){//this is 0 to the files full length
-            	System.out.println(p.payload.length);
-            	System.out.println("Sending pipelined packets");
-            	
-	                byte[] aFile = new byte[p.mss];
-	                //if (p.payload.length + p.header_length > aFile.length){
-	                if ((p.getDataLength()-payloadIndex)/(p.mss-p.header_length) > 0){
-	                	System.out.println("here");
-	                    p.increaseSequenceNumber();
-	                    System.arraycopy(p.header, 0, aFile, 0, p.header_length);
-	                    System.arraycopy(p.payload, payloadIndex, aFile, p.header_length, p.mss - p.header_length);
-	                    payloadIndex = payloadIndex + (p.mss-p.header_length);      
-	                }
-	                //case for last packet that does not have the same length payload
-	                else{   
-	                    p.increaseSequenceNumber();
-	                    System.arraycopy(p.header, 0, aFile, 0, p.header_length);
-	                    System.arraycopy(p.payload, payloadIndex, aFile, p.header_length, p.payload.length - payloadIndex);
-	                    payloadIndex = payloadIndex + (p.mss-p.header_length);  
-	                }
-	                //create datagram packet to send back to the client
-	                dp = new DatagramPacket(aFile , aFile.length , incomingPackets.getAddress() , incomingPackets.getPort());
-	                serverSocket.send(dp);
-	                sentCounter++;
-            	 
-                /*try {
-                    serverSocket.wait();
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }*/
-                serverSocket.receive(receiveAck);
-                byte[] arr = receiveAck.getData();
-                RTPPacket receivedPacket = new RTPPacket(arr);
-                System.out.println("Received Packet: " + receivedPacket.getAckNumber());
-                //ackCounter++;
-                //resend the packet because the client did not get it this is for stop and wait
-//                if(receivedPacket.getAckNumber() != ackCounter){
-//                	serverSocket.send(dp);
-//                }
-//                else{
-//                	ackCounter++;
-//                }
-                
-            }
+    	    DatagramPacket dp;
+    	    //this all works but I am tryin to find a way to wait for the ack of a packet 
+	    	while (payloadIndex < (p.payload.length -1)){
+	    		if(outstandingCounter == 0){
+	    			firstSeqNum = p.sequenceNumber;
+	    		}
+	    		// trying to re-send all the packets
+	    		if(outstandingCounter > windowSize){
+	    			outstandingCounter = 0;
+	    			
+	    			//reset seqNum to the first Seq Num of the window to resend all packets in the window
+	    			p.sequenceNumber = firstSeqNum;
+	    			// reset counter for the payload
+	    			//payloadIndex = something
+	    			for(int i = 1; i< windowSize; i++){
+	    				payloadIndex -= (p.mss-p.header_length);
+	    			}
+	    			//resend window
+	    			//need first sequence number in the window should be remembered
+	    		}
+	    		
+	    		byte[] aFile = new byte[p.mss];
+	    		//if (p.payload.length + p.header_length > aFile.length){
+	    		
+	    		
+	    		if ((p.getDataLength()-payloadIndex)/(p.mss-p.header_length) > 0){ //&& sentCounter-ackCounter < p.rcvWindow){
+	    			//p.increaseSequenceNumber();
+	    			//get the sequence number
+	    			//sequenceNumber = p.sequenceNumber;
+	    			System.arraycopy(p.header, 0, aFile, 0, p.header_length);
+	    			
+	    			// do checksum with payload_arr
+	    			
+	    			System.arraycopy(p.payload, payloadIndex, aFile, p.header_length, p.mss - p.header_length);
+	    			payloadIndex = payloadIndex + (p.mss-p.header_length);		
+	    		}
+	    		//case for last packet that does not have the same length payload
+	    	   else if ((p.getDataLength()-payloadIndex)/(p.mss-p.header_length) <= 0){	
+	    			System.arraycopy(p.header, 0, aFile, 0, p.header_length);
+	    			System.arraycopy(p.payload, payloadIndex, aFile, p.header_length, p.payload.length - payloadIndex);
+	    			payloadIndex = payloadIndex + (p.mss-p.header_length);	
+	    		}
+	    		
+	    		//create datagram packet to send back to the client
+	    		dp = new DatagramPacket(aFile , aFile.length , incomingPackets.getAddress() , incomingPackets.getPort());
+	    		serverSocket.send(dp);
+	    		outstandingCounter++;
+	    		p.increaseSequenceNumber();
+	    		
+	    		serverSocket.receive(receiveAck);
+	    		byte[] arr = receiveAck.getData();
+	    		RTPPacket receivedPacket = new RTPPacket(arr);
+	    		lastAckNumber = receivedPacket.getAckNumber();
+	    		System.out.println("Received Packet: " + receivedPacket.getAckNumber());
+	    		outstandingCounter--;
+	    		
+	    	}
     		/*
     	    dp = new DatagramPacket(p.returnPacket() , p.returnPacket().length , incomingPackets.getAddress() , incomingPackets.getPort());
     		serverSocket.send(dp);
